@@ -1,0 +1,15 @@
+# Data files
+*.csv
+*.md
+
+# But keep CLAUDE.md and README.md
+!CLAUDE.md
+!README.md
+
+# Python
+.venv/
+__pycache__/
+*.pyc
+
+# Editor / tool settings
+.settings.local.json
