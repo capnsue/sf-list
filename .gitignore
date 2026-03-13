@@ -13,3 +13,4 @@ __pycache__/
 
 # Editor / tool settings
 .settings.local.json
+.claude/
