@@ -100,6 +100,46 @@ def genre_label(raw: str) -> str:
     return re.sub(r"\s{2,}", " ", cleaned)
 
 
+def extract_genre_hint(text: str) -> str:
+    """Extract the genre label from the start of a description (before first period or comma)."""
+    if not isinstance(text, str) or not text.strip():
+        return ""
+    period_idx = text.find(".")
+    comma_idx = text.find(",")
+    indices = [i for i in [period_idx, comma_idx] if i > 0]
+    return text[:min(indices)].strip() if indices else ""
+
+
+# Descriptions that contain only navigation links — no useful content
+_NAV_MARKERS = ("Purchase this book", "Directory Entry")
+
+
+def infer_bucket_from_description(description: str) -> str:
+    """Infer genre bucket from description text for Unknown entries.
+
+    Step 1: Extract the genre hint from the start of the description (pre-2022
+            entries often begin with a genre label, e.g. 'Fantasy novel, first in...')
+            and run it through genre_bucket(). High confidence.
+    Step 2: Fall back to running genre_bucket() on the full description text.
+            Lower confidence but catches keyword-rich descriptions.
+    Returns 'Unknown' if nothing useful is found.
+    """
+    if not isinstance(description, str) or not description.strip():
+        return "Unknown"
+    if any(marker in description for marker in _NAV_MARKERS):
+        return "Unknown"
+
+    # Step 1: genre hint from start of description
+    hint = extract_genre_hint(description)
+    if hint:
+        bucket = genre_bucket(hint)
+        if bucket not in ("Unknown", "Other"):
+            return bucket
+
+    # Step 2: full description keyword match
+    return genre_bucket(description)
+
+
 if __name__ == "__main__":
     import sys
     if len(sys.argv) > 1:
@@ -120,7 +160,21 @@ if __name__ == "__main__":
     df["is_cozy"] = df["genre"].str.contains(r"\bcozy\b", case=False, na=False)
     df["media_tie_in"] = df["genre"].str.contains(r"tie-?in", case=False, na=False).map({True: "Media Tie-In", False: ""})
 
-    print("=== Genre bucket distribution (all years) ===")
+    # Description-based inference for Unknown entries
+    unknown_mask = df["genre_bucket"] == "Unknown"
+    df["genre_inferred"] = ""
+    df.loc[unknown_mask, "genre_inferred"] = df.loc[unknown_mask, "description"].apply(infer_bucket_from_description)
+    df["genre_source"] = "label"
+    df.loc[unknown_mask & (df["genre_inferred"] != "Unknown"), "genre_source"] = "description"
+    df.loc[unknown_mask & (df["genre_inferred"] == "Unknown"), "genre_source"] = "unknown"
+
+    resolved = (unknown_mask & (df["genre_inferred"] != "Unknown")).sum()
+    print(f"=== Description inference: {resolved} of {unknown_mask.sum()} Unknowns resolved ===")
+    print(df.loc[unknown_mask, "genre_inferred"].value_counts().to_string())
+
+    print("\n=== Genre bucket distribution (all years, label only) ===")
+    print("    (use genre_inferred for pre-2022 Unknown entries)")
+    print()
     counts = df["genre_bucket"].value_counts()
     pct = (counts / len(df) * 100).round(1)
     print(pd.DataFrame({"count": counts, "%": pct}).to_string())

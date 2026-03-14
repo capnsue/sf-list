@@ -13,6 +13,8 @@ Scraper for Locus Magazine weekly new book releases, built to analyze SF/fantasy
 - `urls.txt` contains all ~565 release page URLs (deduplicated, no `#` anchors)
 
 ## Current status (2026-03-13)
-- Latest scrape: `books_20260313_211555.csv` — 12,564 books, description field now captured (97% coverage)
-- Latest normalized: `books_20260313_211555_normalized.csv` — includes `genre_bucket`, `genre_label`, `year`, `is_cozy`, `media_tie_in`, `description`
-- Next: use `description` text to infer genre for ~7,259 pre-2022 Unknown entries, then trend analysis
+- Latest scrape: `books_20260313_211555.csv` — 12,564 books, description field captured (97% coverage)
+- Latest normalized: `books_20260313_211555_normalized.csv`
+- Description inference done: 5,688 of 7,259 Unknowns resolved (78%) via description text
+- Columns: author, title, publisher, page_count, publication_date, genre, description, source_url, date_scraped, genre_bucket, genre_label, year, is_cozy, media_tie_in, genre_inferred, genre_source
+- **Next: trend analysis** — year-over-year SF vs Fantasy vs Horror vs YA, combining genre_bucket + genre_inferred

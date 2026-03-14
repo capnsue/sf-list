@@ -1,6 +1,6 @@
 # Data files
 *.csv
-*.md
+
 
 # But keep CLAUDE.md and README.md
 !CLAUDE.md
