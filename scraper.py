@@ -169,6 +169,7 @@ def scrape_page(url, scrape_date=None, debug=False):
                 'page_count': page_count,
                 'publication_date': pub_date,
                 'genre': genre,
+                'description': genre_candidate.strip(),
                 'source_url': url,
                 'date_scraped': scrape_date,
             })
@@ -185,7 +186,7 @@ if __name__ == '__main__':
 
     timestamp = datetime.now().strftime('%Y%m%d_%H%M%S')
     filename = f"books_{timestamp}.csv"
-    fieldnames = ['author', 'title', 'publisher', 'page_count', 'publication_date', 'genre', 'source_url', 'date_scraped']
+    fieldnames = ['author', 'title', 'publisher', 'page_count', 'publication_date', 'genre', 'description', 'source_url', 'date_scraped']
     scrape_date = datetime.now().strftime('%Y-%m-%d')
 
     total = 0
@@ -199,6 +200,6 @@ if __name__ == '__main__':
             writer.writerows(books)
             f.flush()
             total += len(books)
-            time.sleep(1)
+            time.sleep(0.5)
 
     print(f"\nTotal books: {total} — saved to {filename}")

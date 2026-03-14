@@ -12,9 +12,7 @@ Scraper for Locus Magazine weekly new book releases, built to analyze SF/fantasy
 - Output CSVs are timestamped: `books_YYYYMMDD_HHMMSS.csv`
 - `urls.txt` contains all ~565 release page URLs (deduplicated, no `#` anchors)
 
-## Current status (2026-03-12)
-- Re-scrape done: 12,564 books in `books_20260312_200621.csv`
-- Genre normalization done: `normalize.py` outputs `*_normalized.csv` with `genre_bucket`, `genre_label`, `year` columns
-- Normalized data sent to friend for review
-- **Re-scrape still needed** — add description text capture, fix 2024-era parsing
-- Next: pre-2022 genre coverage (publisher heuristics → description keywords → LLM), then trend analysis
+## Current status (2026-03-13)
+- Latest scrape: `books_20260313_211555.csv` — 12,564 books, description field now captured (97% coverage)
+- Latest normalized: `books_20260313_211555_normalized.csv` — includes `genre_bucket`, `genre_label`, `year`, `is_cozy`, `media_tie_in`, `description`
+- Next: use `description` text to infer genre for ~7,259 pre-2022 Unknown entries, then trend analysis
