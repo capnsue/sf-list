@@ -10,7 +10,7 @@ Scraper for Locus Magazine weekly new book releases, built to analyze SF/fantasy
 ## Key conventions
 - **Always add `time.sleep(1)` between requests** in any scraping loop — be polite to web servers
 - Output CSVs are timestamped: `books_YYYYMMDD_HHMMSS.csv`
-- `urls.txt` contains all ~565 release page URLs (deduplicated, no `#` anchors)
+- `urls.txt` contains 1,131 URLs total; 728 unique base pages after stripping `#` anchors
 
 ## Current status (2026-03-13)
 - Latest scrape: `books_20260313_211555.csv` — 12,564 books, description field captured (97% coverage)

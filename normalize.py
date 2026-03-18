@@ -140,6 +140,150 @@ def infer_bucket_from_description(description: str) -> str:
     return genre_bucket(description)
 
 
+# Publisher heuristics — substring matched against lowercased publisher field.
+# More specific entries must come before broader ones (e.g. "tor teen" before "tor").
+# SF/Fantasy = specialist SFF house but can't distinguish SF from Fantasy.
+PUBLISHER_RULES = [
+    # YA imprints — high confidence
+    ("tor teen",                    "YA"),
+    ("tor/starscape",               "YA"),
+    ("strange chemistry",           "YA"),
+    ("harperteen",                  "YA"),
+    ("harpercollins/tegen",         "YA"),
+    ("harpercollins/greenwillow",   "YA"),
+    ("harpercollins/balzer",        "YA"),
+    ("harpercollins/heartdrum",     "YA"),
+    ("scholastic",                  "YA"),
+    ("delacorte",                   "YA"),
+    ("disney/hyperion",             "YA"),
+    ("katherine tegen",             "YA"),
+    ("razorbill",                   "YA"),
+    ("abrams/amulet",               "YA"),
+    ("abrams amulet",               "YA"),
+    ("feiwel",                      "YA"),
+    ("sourcebooks fire",            "YA"),
+    ("mcelderry",                   "YA"),
+    ("nancy paulsen",               "YA"),
+    ("orion children",              "YA"),
+    ("greenwillow",                 "YA"),
+    ("arthur a. levine",            "YA"),
+    ("farshore",                    "YA"),
+    ("electric monkey",             "YA"),
+    # Horror specialty presses
+    ("cemetery dance",              "Horror"),
+    ("raw dog screaming",           "Horror"),
+    ("dark regions",                "Horror"),
+    ("word horde",                  "Horror"),
+    ("comet press",                 "Horror"),
+    ("necro publications",          "Horror"),
+    ("hippocampus",                 "Horror"),
+    ("burning effigy",              "Horror"),
+    ("nightscape",                  "Horror"),
+    ("dark renaissance",            "Horror"),
+    ("dark renaissace",             "Horror"),
+    ("journalstone",                "Horror"),
+    ("journal-stone",               "Horror"),
+    ("fedogan",                     "Horror"),
+    ("haverhill house",             "Horror"),
+    ("chizine",                     "Horror"),
+    # Non-fiction / academic
+    ("wesleyan university",         "Non-fiction"),
+    ("oxford university",           "Non-fiction"),
+    ("columbia university",         "Non-fiction"),
+    ("university of illinois",      "Non-fiction"),
+    ("university of arizona",       "Non-fiction"),
+    ("university of minnesota",     "Non-fiction"),
+    ("mit press",                   "Non-fiction"),
+    ("the mit press",               "Non-fiction"),
+    ("palgrave",                    "Non-fiction"),
+    ("mcfarland",                   "Non-fiction"),
+    ("wiley blackwell",             "Non-fiction"),
+    ("flesk",                       "Non-fiction"),
+    ("ballistic publishing",        "Non-fiction"),
+    ("smart pop",                   "Non-fiction"),
+    # SF — publishers that skew heavily SF
+    ("baen",                        "SF"),
+    # SF/Fantasy specialist presses
+    ("tor.com",                     "SF/Fantasy"),
+    ("tordotcom",                   "SF/Fantasy"),
+    ("nightfire",                   "SF/Fantasy"),
+    ("tor/forge",                   "SF/Fantasy"),
+    ("tor/nightfire",               "SF/Fantasy"),
+    ("tor",                         "SF/Fantasy"),
+    ("orbit",                       "SF/Fantasy"),
+    ("redhook",                     "SF/Fantasy"),
+    ("daw",                         "SF/Fantasy"),
+    ("prime books",                 "SF/Fantasy"),
+    ("subterranean",                "SF/Fantasy"),
+    ("solaris",                     "SF/Fantasy"),
+    ("angry robot",                 "SF/Fantasy"),
+    ("pyr",                         "SF/Fantasy"),
+    ("harper voyager",              "SF/Fantasy"),
+    ("del rey",                     "SF/Fantasy"),
+    ("ballantine spectra",          "SF/Fantasy"),
+    ("ballantine del rey",          "SF/Fantasy"),
+    ("tachyon",                     "SF/Fantasy"),
+    ("night shade",                 "SF/Fantasy"),
+    ("lethe press",                 "SF/Fantasy"),
+    ("lethe",                       "SF/Fantasy"),
+    ("saga press",                  "SF/Fantasy"),
+    ("/saga",                       "SF/Fantasy"),
+    ("s&s/saga",                    "SF/Fantasy"),
+    ("small beer press",            "SF/Fantasy"),
+    ("fairwood",                    "SF/Fantasy"),
+    ("aqueduct",                    "SF/Fantasy"),
+    ("gollancz",                    "SF/Fantasy"),
+    ("jo fletcher",                 "SF/Fantasy"),
+    ("titan",                       "SF/Fantasy"),
+    ("arc manor",                   "SF/Fantasy"),
+    ("caezik sf",                   "SF/Fantasy"),
+    ("edge science fiction",        "SF/Fantasy"),
+    ("hades/edge",                  "SF/Fantasy"),
+    ("hades/edge science",          "SF/Fantasy"),
+    ("fantastic books",             "SF/Fantasy"),
+    ("talos",                       "SF/Fantasy"),
+    ("haikasoru",                   "SF/Fantasy"),
+    ("galaxy press",                "SF/Fantasy"),
+    ("world weaver",                "SF/Fantasy"),
+    ("apex",                        "SF/Fantasy"),
+    ("broken eye",                  "SF/Fantasy"),
+    ("hydra house",                 "SF/Fantasy"),
+    ("espec",                       "SF/Fantasy"),
+    ("newcon press",                "SF/Fantasy"),
+    ("mythic delirium",             "SF/Fantasy"),
+    ("cheeky frawg",                "SF/Fantasy"),
+    ("rosarium",                    "SF/Fantasy"),
+    ("resurrection house",          "SF/Fantasy"),
+    ("crossed genres",              "SF/Fantasy"),
+    ("wire rim",                    "SF/Fantasy"),
+    ("undertow",                    "SF/Fantasy"),
+    ("parvus",                      "SF/Fantasy"),
+    ("third flatiron",              "SF/Fantasy"),
+    ("ifwg",                        "SF/Fantasy"),
+    ("spectra",                     "SF/Fantasy"),
+    ("isfic",                       "SF/Fantasy"),
+    ("ace",                         "SF/Fantasy"),
+    ("/roc",                        "SF/Fantasy"),
+    ("penguin/roc",                 "SF/Fantasy"),
+]
+
+
+def infer_bucket_from_publisher(publisher: str) -> str:
+    """Infer genre bucket from publisher name using specialist press heuristics.
+
+    Returns a bucket string, or 'Unknown' if the publisher is a general trade
+    house or not recognized. 'SF/Fantasy' is returned when we know it's a
+    specialist SFF press but can't distinguish SF from Fantasy.
+    """
+    if not isinstance(publisher, str) or not publisher.strip():
+        return "Unknown"
+    pub = publisher.lower()
+    for substring, bucket in PUBLISHER_RULES:
+        if substring in pub:
+            return bucket
+    return "Unknown"
+
+
 if __name__ == "__main__":
     import sys
     if len(sys.argv) > 1:
@@ -160,7 +304,7 @@ if __name__ == "__main__":
     df["is_cozy"] = df["genre"].str.contains(r"\bcozy\b", case=False, na=False)
     df["media_tie_in"] = df["genre"].str.contains(r"tie-?in", case=False, na=False).map({True: "Media Tie-In", False: ""})
 
-    # Description-based inference for Unknown entries
+    # Pass 1: description-based inference for Unknown entries
     unknown_mask = df["genre_bucket"] == "Unknown"
     df["genre_inferred"] = ""
     df.loc[unknown_mask, "genre_inferred"] = df.loc[unknown_mask, "description"].apply(infer_bucket_from_description)
@@ -168,9 +312,24 @@ if __name__ == "__main__":
     df.loc[unknown_mask & (df["genre_inferred"] != "Unknown"), "genre_source"] = "description"
     df.loc[unknown_mask & (df["genre_inferred"] == "Unknown"), "genre_source"] = "unknown"
 
-    resolved = (unknown_mask & (df["genre_inferred"] != "Unknown")).sum()
-    print(f"=== Description inference: {resolved} of {unknown_mask.sum()} Unknowns resolved ===")
+    resolved_desc = (unknown_mask & (df["genre_inferred"] != "Unknown")).sum()
+    print(f"=== Pass 1 — Description inference: {resolved_desc} of {unknown_mask.sum()} Unknowns resolved ===")
     print(df.loc[unknown_mask, "genre_inferred"].value_counts().to_string())
+
+    # Pass 2: publisher heuristics for entries still unresolved after description inference
+    still_unknown = (df["genre_bucket"] == "Unknown") & (df["genre_inferred"] == "Unknown")
+    pub_inferred = df.loc[still_unknown, "publisher"].apply(infer_bucket_from_publisher)
+    resolved_by_pub = pub_inferred[pub_inferred != "Unknown"]
+    df.loc[resolved_by_pub.index, "genre_inferred"] = resolved_by_pub
+    df.loc[resolved_by_pub.index, "genre_source"] = "publisher"
+
+    resolved_pub = (still_unknown & (df["genre_inferred"] != "Unknown")).sum()
+    print(f"\n=== Pass 2 — Publisher heuristics: {resolved_pub} more resolved ===")
+    print(df.loc[still_unknown, "genre_inferred"].value_counts().to_string())
+
+    total_resolved = resolved_desc + resolved_pub
+    total_unknown = unknown_mask.sum()
+    print(f"\n=== Total: {total_resolved} of {total_unknown} Unknowns resolved ({total_resolved/total_unknown*100:.1f}%) ===")
 
     print("\n=== Genre bucket distribution (all years, label only) ===")
     print("    (use genre_inferred for pre-2022 Unknown entries)")
