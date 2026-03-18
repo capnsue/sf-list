@@ -8,16 +8,26 @@ Adds columns to the most recent books CSV:
   media_tie_in  — "Media Tie-In" if genre contains "tie-in", else empty
 
 Bucket priority (first match wins):
-  YA          — young-adult, young adult, middle-grade, standalone "ya"
-  SF          — sf, science fiction, space opera, cyberpunk, solarpunk, biopunk,
-                sci-fi, alternate history, apocalyptic, dystopian, near-future,
-                post-apocalyptic
-  Horror      — horror, ghost, gothic, haunted, paranormal, supernatural
-  Fantasy     — fantasy, romantasy, vampire, zombie, steampunk, fable, folkloric,
-                magic realism, magical elements, weird western
-  Non-fiction — non-fiction, nonfiction, art book, graphic novel, reference
-  Other       — has a genre label but no keyword matched
-  Unknown     — no genre label at all
+  YA           — young-adult, young adult, middle-grade, standalone "ya"
+  Tie-In       — novelization, star trek, tie-in
+  SF           — sf, science fiction, space opera, cyberpunk, solarpunk, biopunk,
+                 sci-fi, alternate history, apocalyptic, dystopian, near-future,
+                 post-apocalyptic, AI, alien, asteroid, astronaut, climate,
+                 dystopia, eco-thriller, far future, galaxy, generation ship,
+                 solar system, space, spacecraft, spaceship, terran, time travel, venus
+  Horror       — horror, ghost, gothic, haunted, paranormal, supernatural,
+                 vampire, zombie, werewolf, demon, scary, dark historical,
+                 dark speculative
+  Fantasy      — fantasy, romantasy, steampunk, fable, folkloric, magic realism,
+                 magical elements, weird western, afterlife, cinderella, dragon,
+                 fairy tale, folk, gods, greek myth, heaven, king arthur, knight,
+                 magic, magical, sleeping beauty, sword and sorcery, wizard
+  Short Fiction — anthology, collection, novella, short fiction
+  Comic        — comics novelization, graphic adaptation, graphic novel
+  Non-fiction  — non-fiction, nonfiction, art book, reference, biography,
+                 cookbook, essays, memoir
+  Other        — has a genre label but no keyword matched
+  Unknown      — no genre label at all
 
 Output: books_YYYYMMDD_HHMMSS_normalized.csv
 """
@@ -33,6 +43,11 @@ BUCKET_RULES = [
         r"middle[- ]grade",
         r"\bya\b",
     ]),
+    ("Tie-In", [
+        r"\bnovelization\b",
+        r"star\s+trek",
+        r"tie-?in",
+    ]),
     ("SF", [
         r"\bsf\b",
         r"science fiction",
@@ -41,11 +56,27 @@ BUCKET_RULES = [
         r"\bsolarpunk\b",
         r"\bbiopunk\b",
         r"\bsci-?fi\b",
-        r"alternate\s+history",
+        r"alternate[- ]history",
         r"\bapocalyptic\b",
-        r"\bdystopian\b",
+        r"\bdystopi[ac]\w*",         # dystopia, dystopian, dystopic
         r"near[- ]future",
+        r"far[- ]future",
         r"post[- ]apocalyptic",
+        r"time[- ]travel",
+        r"generation\s+ship",
+        r"\bai\b",
+        r"\balien\b",
+        r"\basteroid\b",
+        r"\bastronaut\b",
+        r"\bclimate\b",
+        r"eco[- ]thriller",
+        r"\bgalaxy\b",
+        r"solar\s+system",
+        r"\bspace\b",
+        r"\bspacecraft\b",
+        r"\bspaceship\b",
+        r"\bterran\b",
+        r"\bvenus\b",
     ]),
     ("Horror", [
         r"horror",
@@ -54,24 +85,57 @@ BUCKET_RULES = [
         r"\bhaunted\b",
         r"\bparanormal\b",
         r"\bsupernatural\b",
+        r"\bvampire\b",
+        r"\bzombie\b",
+        r"\bwerewolf\b",
+        r"\bdemon\b",
+        r"\bscary\b",
+        r"dark\s+historical",
+        r"dark\s+speculative",
     ]),
     ("Fantasy", [
         r"fantasy",
         r"\bromantasy\b",
-        r"\bvampire\b",
-        r"\bzombie\b",
         r"\bsteampunk\b",
         r"\bfable\b",
         r"\bfolkloric\b",
         r"magic(?:al)?\s+realism",
         r"magical\s+elements",
         r"weird\s+western",
+        r"\bafterlife\b",
+        r"\bcinderella\b",
+        r"\bdragon\b",
+        r"fairy[- ]tale",
+        r"\bfolk\b",
+        r"\bgods?\b",
+        r"greek\s+myth",
+        r"\bheaven\b",
+        r"king\s+arthur",
+        r"\bknight\b",
+        r"\bmagical?\b",             # magic, magical (but not magic realism — already matched above)
+        r"sleeping\s+beauty",
+        r"sword\s+and\s+sorcery",
+        r"\bwizard\b",
+    ]),
+    ("Short Fiction", [
+        r"\banthology\b",
+        r"\bcollection\b",
+        r"\bnovella\b",
+        r"short\s+fiction",
+    ]),
+    ("Comic", [
+        r"comics?\s+novelization",
+        r"graphic\s+adaptation",
+        r"graphic\s+novel",
     ]),
     ("Non-fiction", [
         r"non-?fiction",
         r"\bart book\b",
-        r"\bgraphic novel\b",
         r"\breference\b",
+        r"\bbiography\b",
+        r"\bcookbook\b",
+        r"\bessays\b",
+        r"\bmemoir\b",
     ]),
 ]
 
@@ -344,7 +408,7 @@ if __name__ == "__main__":
         recent.groupby(["year", "genre_bucket"])
         .size()
         .unstack(fill_value=0)
-        .reindex(columns=["SF", "Fantasy", "Horror", "YA", "Non-fiction", "Other", "Unknown"], fill_value=0)
+        .reindex(columns=["SF", "Fantasy", "Horror", "YA", "Tie-In", "Short Fiction", "Comic", "Non-fiction", "Other", "Unknown"], fill_value=0)
     )
     print(pivot.to_string())
 
